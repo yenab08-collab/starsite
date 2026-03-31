@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>별 편지</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Gaegu&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: 'Gaegu', cursive;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+}
+
+.bg-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+}
+
+#inputBox {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+input, select {
+  padding: 12px;
+  border-radius: 15px;
+  border: none;
+  margin: 4px;
+  font-size: 18px;
+}
+
+button {
+  padding: 12px;
+  border-radius: 15px;
+  border: none;
+  background: #ffd6e0;
+}
+
+.star {
+  position: absolute;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.overlay {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.card {
+  background: rgba(255,255,255,0.12);
+  padding: 25px;
+  border-radius: 20px;
+  width: 320px;
+  color: white;
+}
+
+.heart { font-size:26px; }
+.text { font-size:20px; margin:10px 0; }
+.time { font-size:13px; opacity:0.7; }
+
+.reply { margin-top:10px; font-size:15px; }
+.reply input { width:100%; margin-top:5px; }
+</style>
+</head>
+
+<body>
+
+<div id="inputBox">
+  <input id="letter" placeholder="편지 ✨">
+  <select id="heart">
+    <option>🩷</option>
+    <option>🩵</option>
+    <option>💛</option>
+  </select>
+  <button onclick="createStar()">완료</button>
+</div>
+
+<script>
+// 🌌 배경 별
+for (let i = 0; i < 100; i++) {
+  let s = document.createElement("div");
+  s.className = "bg-star";
+  s.style.left = Math.random()*window.innerWidth+"px";
+  s.style.top = Math.random()*window.innerHeight+"px";
+  document.body.appendChild(s);
+}
+
+// ⭐ 완전 새로 시작
+let stars = [];
+
+function save(){
+  localStorage.setItem("stars_clean", JSON.stringify(stars));
+}
+
+// 시간 표시
+function timeAgo(t){
+  let diff = Math.floor((Date.now()-t)/1000);
+  if(diff<60) return "방금 전";
+  if(diff<3600) return Math.floor(diff/60)+"분 전";
+  if(diff<86400) return Math.floor(diff/3600)+"시간 전";
+  return Math.floor(diff/86400)+"일 전";
+}
+
+// 별 생성
+function createStar(){
+  let text = letter.value;
+  let heart = heartSelect.value;
+  if(!text) return;
+
+  stars.push({
+    text,
+    heart,
+    replies: [],
+    time: Date.now(),
+    x: Math.random()*window.innerWidth,
+    y: Math.random()*window.innerHeight
+  });
+
+  save();
+  render();
+  letter.value="";
+}
+
+// 렌더링
+function render(){
+  document.querySelectorAll(".star,.overlay").forEach(e=>e.remove());
+
+  // ⏰ 12시간 제한
+  stars = stars.filter(s => Date.now()-s.time < 43200000);
+
+  stars.forEach((s,i)=>{
+    let el = document.createElement("div");
+    el.className="star";
+    el.innerText="⭐";
+    el.style.left=s.x+"px";
+    el.style.top=s.y+"px";
+
+    el.onclick=()=>{
+      let overlay=document.createElement("div");
+      overlay.className="overlay";
+
+      let card=document.createElement("div");
+      card.className="card";
+
+      let repliesHTML = s.replies.map(r=>"<div>💬 "+r+"</div>").join("");
+
+      card.innerHTML=`
+        <div class="heart">${s.heart}</div>
+        <div class="text">${s.text}</div>
+        <div class="time">${timeAgo(s.time)}</div>
+        <div class="reply">${repliesHTML}</div>
+        <input id="replyInput" placeholder="답장">
+        <button onclick="addReply(${i})">답장</button>
+      `;
+
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+
+      overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); }
+    };
+
+    document.body.appendChild(el);
+  });
+}
+
+// 답장
+function addReply(i){
+  let input = document.getElementById("replyInput");
+  if(!input.value) return;
+  stars[i].replies.push(input.value);
+  save();
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
