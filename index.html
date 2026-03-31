@@ -41,6 +41,7 @@ button {
   border-radius: 15px;
   border: none;
   background: #ffd6e0;
+  cursor: pointer;
 }
 
 .star {
@@ -98,7 +99,7 @@ for (let i = 0; i < 100; i++) {
   document.body.appendChild(s);
 }
 
-// ⭐ 완전 새로 시작
+// ⭐ 새 별
 let stars = [];
 
 function save(){
@@ -116,6 +117,9 @@ function timeAgo(t){
 
 // 별 생성
 function createStar(){
+  let letter = document.getElementById("letter");
+  let heartSelect = document.getElementById("heart");
+
   let text = letter.value;
   let heart = heartSelect.value;
   if(!text) return;
@@ -148,42 +152,51 @@ function render(){
     el.style.left=s.x+"px";
     el.style.top=s.y+"px";
 
-    el.onclick=()=>{
-      let overlay=document.createElement("div");
-      overlay.className="overlay";
-
-      let card=document.createElement("div");
-      card.className="card";
-
-      let repliesHTML = s.replies.map(r=>"<div>💬 "+r+"</div>").join("");
-
-      card.innerHTML=`
-        <div class="heart">${s.heart}</div>
-        <div class="text">${s.text}</div>
-        <div class="time">${timeAgo(s.time)}</div>
-        <div class="reply">${repliesHTML}</div>
-        <input id="replyInput" placeholder="답장">
-        <button onclick="addReply(${i})">답장</button>
-      `;
-
-      overlay.appendChild(card);
-      document.body.appendChild(overlay);
-
-      overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); }
-    };
+    el.onclick=()=> openCard(i);
 
     document.body.appendChild(el);
   });
 }
 
-// 답장
-function addReply(i){
-  let input = document.getElementById("replyInput");
-  if(!input.value) return;
-  stars[i].replies.push(input.value);
-  save();
-  render();
+// 카드 열기
+function openCard(i){
+  let s = stars[i];
+
+  let overlay=document.createElement("div");
+  overlay.className="overlay";
+
+  let card=document.createElement("div");
+  card.className="card";
+
+  let repliesHTML = s.replies.map(r=>"<div>💬 "+r+"</div>").join("");
+
+  card.innerHTML=`
+    <div class="heart">${s.heart}</div>
+    <div class="text">${s.text}</div>
+    <div class="time">${timeAgo(s.time)}</div>
+    <div class="reply" id="replyBox">${repliesHTML}</div>
+    <input id="replyInput" placeholder="답장">
+    <button id="replyBtn">답장</button>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); }
+
+  document.getElementById("replyBtn").onclick = ()=>{
+    let input = document.getElementById("replyInput");
+    if(!input.value) return;
+    stars[i].replies.push(input.value);
+    save();
+    render();
+    overlay.remove(); // 답장 후 카드 닫기
+  }
 }
+
+// 페이지 로드 시 로컬 저장 불러오기
+let saved = localStorage.getItem("stars_clean");
+if(saved) stars = JSON.parse(saved);
 
 render();
 </script>
